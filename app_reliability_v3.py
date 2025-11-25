@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from lifelines import KaplanMeierFitter
-from lifelines import WeibullFitter, LogNormalFitter, ExponentialFitter, GammaFitter
+from lifelines import WeibullFitter, LogNormalFitter, ExponentialFitter
 import numpy as np
 import base64
 import io
@@ -170,7 +170,7 @@ if st.session_state['data_loaded']:
         'Weibull': WeibullFitter().fit(T, E, label='Weibull'),
         'Lognormal': LogNormalFitter().fit(T, E, label='Lognormal'),
         'Exponencial': ExponentialFitter().fit(T, E, label='Exponencial'),
-        'Gamma': GammaFitter().fit(T, E, label='Gamma')
+        
     }
 
     # --- 3. Gráfico Principal (Dispersión KM + Ajustes) ---
@@ -207,9 +207,7 @@ if st.session_state['data_loaded']:
             main_params['Sigma (escala)'] = f"{params.get('sigma_', np.nan):.4f}"
         elif name == 'Exponencial':
             main_params['Tasa (lambda)'] = f"{params.get('lambda_', np.nan):.4f}"
-        elif name == 'Gamma':
-            main_params['Forma (a)'] = f"{params.get('a_', np.nan):.4f}"
-            main_params['Escala (lambda)'] = f"{params.get('lambda_', np.nan):.4f}"
+        
 
         # Calcular R^2
         r2 = calculate_r_squared(kmf.survival_function_.iloc[:, 0], fitter.survival_function_.iloc[:, 0])
@@ -319,4 +317,5 @@ if st.session_state['data_loaded']:
     st.pyplot(fig_dist)
 
 else:
+
     st.info("Para comenzar el análisis, pega los datos de **Tiempos de Falla** y **Tiempos Censurados** en las áreas de texto de la barra lateral y presiona **'Iniciar Análisis'**.")
