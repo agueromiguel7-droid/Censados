@@ -279,36 +279,54 @@ if st.session_state['data_loaded']:
     fig_dist, axes = plt.subplots(2, 2, figsize=(15, 12))
     fig_dist.suptitle(f'Funciones de Distribución para el Ajuste {selected_distribution_name}', fontsize=16)
 
-    # 1. Densidad de Probabilidad (PDF)
-    selected_fitter.plot_pdf(ax=axes[0, 0], loc=slice(None), show_censors=False, color='b')
-    axes[0, 0].set_title('Densidad de Probabilidad (PDF)')
-    axes[0, 0].set_xlabel('Tiempo')
-    axes[0, 0].set_ylabel('$f(t)$')
-    axes[0, 0].grid(True, linestyle='--', alpha=0.6)
+    try:
+        # 1. Densidad de Probabilidad (PDF)
+        selected_fitter.plot_pdf(ax=axes[0, 0], loc=slice(None), show_censors=False, color='b')
+        axes[0, 0].set_title('Densidad de Probabilidad (PDF)')
+        axes[0, 0].set_xlabel('Tiempo')
+        axes[0, 0].set_ylabel('$f(t)$')
+        axes[0, 0].grid(True, linestyle='--', alpha=0.6)
+    except Exception as e:
+        axes[0, 0].text(0.5, 0.5, f"Error al generar PDF: {selected_distribution_name} no converge o datos insuficientes.", 
+                        horizontalalignment='center', verticalalignment='center', color='red', transform=axes[0, 0].transAxes)
+        axes[0, 0].set_title('Densidad de Probabilidad (PDF) - Fallida')
+        
+    try:
+        # 2. Distribución Acumulada Directa (CDF)
+        selected_fitter.plot_cumulative_density(ax=axes[0, 1], loc=slice(None), show_censors=False, color='g')
+        axes[0, 1].set_title('Distribución Acumulada Directa (CDF)')
+        axes[0, 1].set_xlabel('Tiempo')
+        axes[0, 1].set_ylabel('$F(t)$')
+        axes[0, 1].grid(True, linestyle='--', alpha=0.6)
+    except Exception as e:
+        axes[0, 1].text(0.5, 0.5, f"Error al generar CDF.", horizontalalignment='center', verticalalignment='center', color='red', transform=axes[0, 1].transAxes)
+        axes[0, 1].set_title('Distribución Acumulada Directa (CDF) - Fallida')
 
-    # 2. Distribución Acumulada Directa (CDF)
-    selected_fitter.plot_cumulative_density(ax=axes[0, 1], loc=slice(None), show_censors=False, color='g')
-    axes[0, 1].set_title('Distribución Acumulada Directa (CDF)')
-    axes[0, 1].set_xlabel('Tiempo')
-    axes[0, 1].set_ylabel('$F(t)$')
-    axes[0, 1].grid(True, linestyle='--', alpha=0.6)
+    try:
+        # 3. Confiabilidad (Survival Function - Acumulada Inversa)
+        selected_fitter.plot_survival_function(ax=axes[1, 0], loc=slice(None), show_censors=False, color='r')
+        axes[1, 0].set_title('Función de Confiabilidad ($S(t)$)')
+        axes[1, 0].set_xlabel('Tiempo')
+        axes[1, 0].set_ylabel('$S(t)$')
+        axes[1, 0].grid(True, linestyle='--', alpha=0.6)
+    except Exception as e:
+        axes[1, 0].text(0.5, 0.5, f"Error al generar S(t).", horizontalalignment='center', verticalalignment='center', color='red', transform=axes[1, 0].transAxes)
+        axes[1, 0].set_title('Función de Confiabilidad ($S(t)$) - Fallida')
 
-    # 3. Confiabilidad (Survival Function - Acumulada Inversa)
-    selected_fitter.plot_survival_function(ax=axes[1, 0], loc=slice(None), show_censors=False, color='r')
-    axes[1, 0].set_title('Función de Confiabilidad ($S(t)$)')
-    axes[1, 0].set_xlabel('Tiempo')
-    axes[1, 0].set_ylabel('$S(t)$')
-    axes[1, 0].grid(True, linestyle='--', alpha=0.6)
-
-    # 4. Tasa de Falla (Hazard Function)
-    selected_fitter.plot_hazard(ax=axes[1, 1], loc=slice(None), show_censors=False, color='k')
-    axes[1, 1].set_title('Tasa de Falla (Hazard Function - $h(t)$)')
-    axes[1, 1].set_xlabel('Tiempo')
-    axes[1, 1].set_ylabel('$h(t)$')
-    axes[1, 1].grid(True, linestyle='--', alpha=0.6)
+    try:
+        # 4. Tasa de Falla (Hazard Function)
+        selected_fitter.plot_hazard(ax=axes[1, 1], loc=slice(None), show_censors=False, color='k')
+        axes[1, 1].set_title('Tasa de Falla (Hazard Function - $h(t)$)')
+        axes[1, 1].set_xlabel('Tiempo')
+        axes[1, 1].set_ylabel('$h(t)$')
+        axes[1, 1].grid(True, linestyle='--', alpha=0.6)
+    except Exception as e:
+        axes[1, 1].text(0.5, 0.5, f"Error al generar h(t).", horizontalalignment='center', verticalalignment='center', color='red', transform=axes[1, 1].transAxes)
+        axes[1, 1].set_title('Tasa de Falla (Hazard Function - $h(t)$) - Fallida')
     
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     st.pyplot(fig_dist)
 
 else:
     st.info("Para comenzar el análisis, pega los datos de **Tiempos de Falla** y **Tiempos Censurados** en las áreas de texto de la barra lateral y presiona **'Iniciar Análisis'**.")
+
