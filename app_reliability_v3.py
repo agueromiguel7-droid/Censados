@@ -239,20 +239,27 @@ with col_carga:
 
 # El análisis se ejecuta en cada recarga si hay texto
 if data_fallos_str.strip() or data_censurados_str.strip():
+    
     try:
-        analysis_data = process_and_fit_data(data_fallos_str, data_censurados_str)
+        # Llamamos a la función de procesamiento y ajuste
+        # process_and_fit_data devuelve un diccionario de resultados o None
+        analysis_data = process_and_fit_data(data_fallos_str, data_censurados_str) 
     except Exception as e:
         st.error(f"Error crítico al procesar y ajustar los datos. Causa: {e}")
         analysis_data = None
 else:
+    # Si las cajas de texto están vacías, no hay datos para analizar
     analysis_data = None
 
 
-if analysis_data and analysis_data['dist_results']:
+# El resto del código de análisis debe ejecutarse SOLAMENTE si analysis_data existe
+if analysis_data:
     # Desempaquetar los resultados
     kmf = analysis_data['kmf']
     dist_results = analysis_data['dist_results']
     scaling_factor = analysis_data['scaling_factor']
+    T = analysis_data['T'] # Línea que fallaba (ahora dentro de la condición)
+    E = analysis_data['E']
     
     # 1.2 Mostrar Preview de Datos (Columna Derecha)
     with col_preview:
@@ -311,3 +318,4 @@ if analysis_data and analysis_data['dist_results']:
             elif name == 'Lognormal':
                 main_params['Mu (locación)'] = f"{params['mu'] + np.log(scaling_factor):.4f}"
                 main_params['Sigma (escala)'] = f"{params['sigma']:.4f}"
+
