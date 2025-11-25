@@ -67,7 +67,7 @@ def process_pasted_data(data_fallos_str, data_censurados_str):
     # =========================================================================
     
     # Validación: Si hay tiempos <= 0, reemplazarlos con un valor muy pequeño (epsilon)
-    # Esto evita log(0) o fallas en el ajuste de Weibull/Lognormal.
+    # Esto evita log(0) o fallas en el ajuste de /Lognormal.
     
     epsilon = 0.00001
     
@@ -173,9 +173,9 @@ if st.session_state['data_loaded']:
     
     # --- 2. Ajuste a Distribuciones ---
     dist_fitters = {
-        'Weibull': WeibullFitter().fit(T, E, label='Weibull'),
-        'Lognormal': LogNormalFitter().fit(T, E, label='Lognormal'),
-        'Exponencial': ExponentialFitter().fit(T, E, label='Exponencial'),
+        'Weibull': WeibullFitter().fit(T, E, label='Weibull', method='Nelder-Mead'),
+        'Lognormal': LogNormalFitter().fit(T, E, label='Lognormal', method='Nelder-Mead'),
+        'Exponencial': ExponentialFitter().fit(T, E, label='Exponencial', method='Nelder-Mead'),
     }
 
     # Definimos un diccionario de colores para asegurar que usamos códigos válidos
@@ -350,5 +350,6 @@ if st.session_state['data_loaded']:
 
 else:
     st.info("Para comenzar el análisis, pega los datos de **Tiempos de Falla** y **Tiempos Censurados** en las áreas de texto de la barra lateral y presiona **'Iniciar Análisis'**.")
+
 
 
