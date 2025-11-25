@@ -161,18 +161,21 @@ col_start, col_reset, col_spacer = st.columns([1, 1, 3])
 if col_start.button("▶️ Iniciar Análisis", key="start_analysis"):
     if data_fallos_str.strip() or data_censurados_str.strip():
         try:
+            # 1. Procesar datos y aplicar escalado/validación
             data = process_pasted_data(data_fallos_str, data_censurados_str)
             
             if data.empty:
                 st.error("No se detectaron datos numéricos válidos en la entrada.")
             else:
-                # Guardar en estado de sesión para persistir
+                # 2. Guardar en estado de sesión (ESTO ES CRUCIAL)
                 st.session_state['T'] = data['Tiempo'].astype(float)
                 st.session_state['E'] = data['Evento'].astype(int)
                 st.session_state['Tiempo_Original'] = data['Tiempo_Original'].astype(float)
                 st.session_state['data_loaded'] = True
                 st.success("Datos cargados y combinados correctamente.")
-                st.rerun()
+                
+                # 3. Forzar la recarga para que el bloque de análisis se ejecute
+                st.rerun() 
         except Exception as e:
             st.error(f"Error al procesar los datos. Asegúrate de que sean números. Error: {e}")
     else:
@@ -214,4 +217,5 @@ if st.session_state.get('data_loaded', False):
     valid_indices = (S_t > 0) & (S_t < 1)
     T_valid = T_unique[valid_indices]
     S_t_valid = S_t
+
 
