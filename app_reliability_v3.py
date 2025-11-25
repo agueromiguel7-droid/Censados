@@ -42,6 +42,7 @@ def calculate_r_squared(kmf_curve, fitted_curve):
 def process_pasted_data(data_fallos_str, data_censurados_str):
     """Procesa las cadenas de texto pegadas y las combina en el formato (T, E)."""
     
+    # Función auxiliar para convertir la cadena en DataFrame de una sola columna
     def parse_text_data(data_str, event_val):
         try:
             df = pd.read_csv(io.StringIO(data_str), header=None, names=['Tiempo'], skipinitialspace=True)
@@ -52,10 +53,30 @@ def process_pasted_data(data_fallos_str, data_censurados_str):
         except Exception:
             return pd.DataFrame({'Tiempo': [], 'Evento': []})
 
+    # 1. Procesar Fallos (Tiempos de Evento = 1)
     df_fallos = parse_text_data(data_fallos_str, 1)
+    
+    # 2. Procesar Censurados (Tiempos de Evento = 0)
     df_censurados = parse_text_data(data_censurados_str, 0)
+    
+    # 3. Combinar los DataFrames
     data_combined = pd.concat([df_fallos, df_censurados], ignore_index=True)
     
+    # =========================================================================
+    # 🚀 PUNTO DE INSERCIÓN PARA LA COMPROBACIÓN (Antes del return)
+    # =========================================================================
+    
+    # Validación: Si hay tiempos <= 0, reemplazarlos con un valor muy pequeño (epsilon)
+    # Esto evita log(0) o fallas en el ajuste de Weibull/Lognormal.
+    
+    epsilon = 0.00001
+    
+    if (data_combined['Tiempo'] <= 0).any():
+        st.warning(f"¡Advertencia! Se detectaron tiempos <= 0. Se han reemplazado con {epsilon} para permitir el ajuste de distribuciones logarítmicas.")
+        data_combined.loc[data_combined['Tiempo'] <= 0, 'Tiempo'] = epsilon
+    
+    # =========================================================================
+
     return data_combined
 
 # Función para manejar el reinicio
@@ -329,4 +350,5 @@ if st.session_state['data_loaded']:
 
 else:
     st.info("Para comenzar el análisis, pega los datos de **Tiempos de Falla** y **Tiempos Censurados** en las áreas de texto de la barra lateral y presiona **'Iniciar Análisis'**.")
+
 
