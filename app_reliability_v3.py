@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from lifelines import KaplanMeierFitter
-from lifelines import WeibullFitter, LogNormalFitter, ExponentialFitter
+# --- NOTA IMPORTANTE: GammaFitter ha sido eliminado para evitar conflictos ---
+from lifelines import WeibullFitter, LogNormalFitter, ExponentialFitter 
 import numpy as np
 import base64
 import io
@@ -41,26 +42,18 @@ def calculate_r_squared(kmf_curve, fitted_curve):
 def process_pasted_data(data_fallos_str, data_censurados_str):
     """Procesa las cadenas de texto pegadas y las combina en el formato (T, E)."""
     
-    # Función auxiliar para convertir la cadena en DataFrame de una sola columna
     def parse_text_data(data_str, event_val):
-        # Usamos io.StringIO para simular un archivo y pd.read_csv para manejar espacios/saltos
         try:
             df = pd.read_csv(io.StringIO(data_str), header=None, names=['Tiempo'], skipinitialspace=True)
-            # Limpiamos filas vacías que pueden aparecer al pegar
             df = df.dropna(subset=['Tiempo'])
             df['Tiempo'] = pd.to_numeric(df['Tiempo'], errors='coerce')
             df['Evento'] = event_val
-            return df.dropna(subset=['Tiempo']) # Eliminar filas donde la conversión falló
+            return df.dropna(subset=['Tiempo'])
         except Exception:
             return pd.DataFrame({'Tiempo': [], 'Evento': []})
 
-    # 1. Procesar Fallos (Tiempos de Evento = 1)
     df_fallos = parse_text_data(data_fallos_str, 1)
-    
-    # 2. Procesar Censurados (Tiempos de Evento = 0)
     df_censurados = parse_text_data(data_censurados_str, 0)
-    
-    # 3. Combinar los DataFrames
     data_combined = pd.concat([df_fallos, df_censurados], ignore_index=True)
     
     return data_combined
@@ -72,14 +65,12 @@ def reset_application():
     for key in keys_to_delete:
         if key in st.session_state:
             del st.session_state[key]
-    # Forzar la recarga de la aplicación para limpiar los campos de texto
     st.experimental_rerun()
 
 # --- Encabezado de la Herramienta ---
 col1, col2 = st.columns([1, 4])
 
-# Intento de cargar y mostrar el logo
-LOGO_FILE = "mi_logo.png"
+LOGO_FILE = "grupo.reliarisk.png"
 try:
     with open(LOGO_FILE, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
@@ -117,29 +108,24 @@ with st.sidebar:
         key="data_censurados_input"
     )
 
-    # Botón de Procesar/Iniciar
     if st.button("▶️ Iniciar Análisis", key="start_analysis"):
-        # Esto iniciará el procesamiento
         if data_fallos_str.strip() or data_censurados_str.strip():
             try:
-                # Procesar y combinar datos
                 data = process_pasted_data(data_fallos_str, data_censurados_str)
                 
                 if data.empty:
                     st.error("No se detectaron datos numéricos válidos en la entrada.")
                 else:
-                    # Guardar en estado de sesión para persistir
                     st.session_state['T'] = data['Tiempo'].astype(float)
                     st.session_state['E'] = data['Evento'].astype(int)
                     st.session_state['data_loaded'] = True
                     st.success("Datos cargados y combinados correctamente. Pulsa **'Reiniciar Cálculo'** para cargar nuevos datos.")
-                    st.experimental_rerun() # Forzar rerun para mostrar los resultados
+                    st.experimental_rerun()
             except Exception as e:
                 st.error(f"Error al procesar los datos. Asegúrate de que sean números. Error: {e}")
         else:
             st.warning("Por favor, pega datos en al menos uno de los campos para iniciar el análisis.")
 
-    # Botón de Reinicio
     st.button("🗑️ Reiniciar Cálculo", on_click=reset_application, key="reset_button")
 
 
@@ -153,7 +139,6 @@ if st.session_state['data_loaded']:
     
     st.success(f"Análisis activo: Total de {len(T)} puntos. {E.sum()} fallos, {len(T) - E.sum()} censurados.")
 
-    # Mostrar la previsualización de datos combinados
     st.subheader("Datos Combinados (Formato [Tiempo, Evento])")
     df_preview = pd.DataFrame({'Tiempo': T, 'Evento': E}).sort_values(by='Tiempo').head(10)
     st.dataframe(df_preview)
@@ -170,8 +155,16 @@ if st.session_state['data_loaded']:
         'Weibull': WeibullFitter().fit(T, E, label='Weibull'),
         'Lognormal': LogNormalFitter().fit(T, E, label='Lognormal'),
         'Exponencial': ExponentialFitter().fit(T, E, label='Exponencial'),
-        
     }
+
+    # Definimos un diccionario de colores para asegurar que usamos códigos válidos
+    color_map = {
+        'Weibull': 'orange',
+        'Lognormal': 'green',
+        'Exponencial': 'red',
+        # Si añades más: 'Nombre': 'codigo_hex' o 'color_valido'
+    }
+
 
     # --- 3. Gráfico Principal (Dispersión KM + Ajustes) ---
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -180,8 +173,11 @@ if st.session_state['data_loaded']:
     kmf.plot_survival_function(ax=ax, linestyle='-', marker='o', markeredgecolor='b', color='b', markersize=4)
     
     # Graficar Ajustes de Distribución (línea de ajuste)
+    # **ESTE ES EL BUCLE CORREGIDO:**
     for name, fitter in dist_fitters.items():
-        fitter.plot_survival_function(ax=ax, color=fitter._label.lower()[0])
+        # Usamos el nombre de la distribución para obtener un color válido del mapa
+        color_valido = color_map.get(name, 'black')
+        fitter.plot_survival_function(ax=ax, color=color_valido) # <-- CAMBIO AQUI
 
     ax.set_title('Curva de Confiabilidad (Kaplan-Meier vs. Distribuciones Ajustadas)')
     ax.set_xlabel('Tiempo')
@@ -207,9 +203,7 @@ if st.session_state['data_loaded']:
             main_params['Sigma (escala)'] = f"{params.get('sigma_', np.nan):.4f}"
         elif name == 'Exponencial':
             main_params['Tasa (lambda)'] = f"{params.get('lambda_', np.nan):.4f}"
-        
 
-        # Calcular R^2
         r2 = calculate_r_squared(kmf.survival_function_.iloc[:, 0], fitter.survival_function_.iloc[:, 0])
 
         metric_data.append({
@@ -317,5 +311,4 @@ if st.session_state['data_loaded']:
     st.pyplot(fig_dist)
 
 else:
-
     st.info("Para comenzar el análisis, pega los datos de **Tiempos de Falla** y **Tiempos Censurados** en las áreas de texto de la barra lateral y presiona **'Iniciar Análisis'**.")
