@@ -108,7 +108,7 @@ def reset_application():
         if key in st.session_state:
             del st.session_state[key]
     # Limpiamos las áreas de texto forzando un rerun
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Encabezado de la Herramienta ---
 col1, col2 = st.columns([1, 4])
@@ -172,7 +172,7 @@ if col_start.button("▶️ Iniciar Análisis", key="start_analysis"):
                 st.session_state['Tiempo_Original'] = data['Tiempo_Original'].astype(float)
                 st.session_state['data_loaded'] = True
                 st.success("Datos cargados y combinados correctamente.")
-                st.experimental_rerun()
+                st.rerun()
         except Exception as e:
             st.error(f"Error al procesar los datos. Asegúrate de que sean números. Error: {e}")
     else:
@@ -214,3 +214,4 @@ if st.session_state.get('data_loaded', False):
     valid_indices = (S_t > 0) & (S_t < 1)
     T_valid = T_unique[valid_indices]
     S_t_valid = S_t
+
